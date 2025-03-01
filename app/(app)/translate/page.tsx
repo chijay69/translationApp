@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { LanguageSelector } from "@/app/components/language-selector"
@@ -28,7 +29,8 @@ const LANGUAGE_NAMES: Record<string, string> = {
   'gre': 'Greek'
 };
 
-export default function TranslatePage() {
+// Create a client component for the main content
+function TranslateContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
@@ -225,5 +227,22 @@ export default function TranslatePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function TranslatePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-start p-4">
+        <div className="bg-white rounded-3xl shadow-lg max-w-4xl w-full overflow-hidden">
+          <div className="p-6">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-6">Loading...</h1>
+          </div>
+        </div>
+      </div>
+    }>
+      <TranslateContent />
+    </Suspense>
   )
 } 
