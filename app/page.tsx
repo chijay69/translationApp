@@ -1,4 +1,7 @@
-import Link from "next/link"
+import { getServerSession } from 'next-auth/next';
+import { redirect } from 'next/navigation';
+import { authOptions } from './api/auth/[...nextauth]/route';
+import Link from "next/link";
 import {
   FlagBrazil,
   FlagCanada,
@@ -8,9 +11,15 @@ import {
   FlagUK,
   FlagMexico,
   FlagIndonesia,
-} from "./components/flags"
+} from "./components/flags";
 
-export default function TranslatorLanding() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect('/auth/signin');
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 pb-20">
       <div className="bg-white rounded-3xl shadow-lg max-w-sm w-full overflow-hidden">
@@ -50,7 +59,7 @@ export default function TranslatorLanding() {
 
           {/* Continue button */}
           <Link
-            href="/translate"
+            href="/voice"
             className="w-full bg-indigo-600 text-white py-3 rounded-full text-center font-medium hover:bg-indigo-700 transition-colors"
           >
             Continue
@@ -58,6 +67,6 @@ export default function TranslatorLanding() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
