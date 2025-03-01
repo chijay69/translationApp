@@ -28,6 +28,10 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   // Load recordings from localStorage on mount
   useEffect(() => {
+    loadRecordings()
+  }, [])
+
+  const loadRecordings = () => {
     const savedRecordings = localStorage.getItem("recordings")
     if (savedRecordings) {
       try {
@@ -48,48 +52,61 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
         console.error("Error loading recordings:", error)
       }
     }
-  }, [])
+  }
+
+  const saveRecordings = async (recordingsToSave: Recording[]) => {
+    try {
+      const recordingsData = await Promise.all(
+        recordingsToSave.map(async recording => {
+          const arrayBuffer = await recording.blob.arrayBuffer()
+          const uint8Array = new Uint8Array(arrayBuffer)
+          return {
+            id: recording.id,
+            blobData: Array.from(uint8Array),
+            timestamp: recording.timestamp.toISOString(),
+            transcript: recording.transcript,
+            sourceLanguage: recording.sourceLanguage,
+            translation: recording.translation
+          }
+        })
+      )
+      localStorage.setItem("recordings", JSON.stringify(recordingsData))
+    } catch (error) {
+      console.error("Error saving recordings:", error)
+    }
+  }
 
   // Save recordings to localStorage whenever they change
   useEffect(() => {
     if (recordings.length > 0) {
-      const saveRecordings = async () => {
-        const recordingsToSave = await Promise.all(
-          recordings.map(async recording => {
-            const arrayBuffer = await recording.blob.arrayBuffer()
-            const uint8Array = new Uint8Array(arrayBuffer)
-            return {
-              id: recording.id,
-              blobData: Array.from(uint8Array),
-              timestamp: recording.timestamp.toISOString(),
-              transcript: recording.transcript,
-              sourceLanguage: recording.sourceLanguage,
-              translation: recording.translation
-            }
-          })
-        )
-        localStorage.setItem("recordings", JSON.stringify(recordingsToSave))
-      }
-      saveRecordings()
+      saveRecordings(recordings)
     } else {
       localStorage.removeItem("recordings")
     }
   }, [recordings])
 
-  const addRecording = (recording: Recording) => {
-    setRecordings(prev => [...prev, recording])
+  const addRecording = async (recording: Recording) => {
+    const newRecordings = [...recordings, recording]
+    setRecordings(newRecordings)
+    await saveRecordings(newRecordings)
   }
 
-  const deleteRecording = (id: string) => {
-    setRecordings(prev => prev.filter(recording => recording.id !== id))
+  const deleteRecording = async (id: string) => {
+    const newRecordings = recordings.filter(recording => recording.id !== id)
+    setRecordings(newRecordings)
+    if (newRecordings.length > 0) {
+      await saveRecordings(newRecordings)
+    } else {
+      localStorage.removeItem("recordings")
+    }
   }
 
-  const updateRecording = (id: string, updates: Partial<Recording>) => {
-    setRecordings(prev =>
-      prev.map(recording =>
-        recording.id === id ? { ...recording, ...updates } : recording
-      )
+  const updateRecording = async (id: string, updates: Partial<Recording>) => {
+    const newRecordings = recordings.map(recording =>
+      recording.id === id ? { ...recording, ...updates } : recording
     )
+    setRecordings(newRecordings)
+    await saveRecordings(newRecordings)
   }
 
   return (

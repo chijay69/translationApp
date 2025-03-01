@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { LanguageSelector } from "../../components/language-selector"
 import { TextActions } from "../../components/text-actions"
-import { AudioWaveform } from "../../components/audio-waveform"
 import { AudioPlayer } from "../../components/audio-player"
 import { Mic, Square, Trash2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -103,13 +102,10 @@ export default function VoicePage() {
   const [isTranslating, setIsTranslating] = useState(false)
   const [transcribedText, setTranscribedText] = useState("")
   const [audioData, setAudioData] = useState<Blob | null>(null)
-  const [selectedRecording, setSelectedRecording] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const interimTranscriptRef = useRef("")
-
-  const recording = selectedRecording ? recordings.find(r => r.id === selectedRecording) : null
 
   const startRecording = async () => {
     try {
@@ -182,9 +178,9 @@ export default function VoicePage() {
   const handleRecordingStop = () => {
     if (!mediaRecorderRef.current || !recognitionRef.current) return
 
-    // Stop recognition first to get final results
-    recognitionRef.current.stop()
-    
+      // Stop recognition first to get final results
+      recognitionRef.current.stop()
+      
     // Stop media recorder and process audio
     mediaRecorderRef.current.stop()
     setIsRecording(false)
@@ -229,7 +225,6 @@ export default function VoicePage() {
         }
 
         addRecording(newRecording)
-        setSelectedRecording(recordingId)
       } catch (error) {
         console.error("Processing error:", error)
         toast({
@@ -251,6 +246,8 @@ export default function VoicePage() {
       }
     }
   }
+
+  
 
   // Add effect to automatically translate when target language changes
   useEffect(() => {
@@ -308,42 +305,6 @@ export default function VoicePage() {
       } finally {
         setIsProcessingFinal(false)
       }
-    }
-  }
-
-  const handleTranslation = async () => {
-    if (!recording?.transcript || !recording.sourceLanguage) return
-
-    setIsTranslating(true)
-    try {
-      const translatedText = await translateText(
-        recording.transcript,
-        LANGUAGE_NAMES[recording.sourceLanguage] || "Unknown",
-        LANGUAGE_NAMES[targetLanguage]
-      )
-
-      const updatedRecording = {
-        ...recording,
-        translation: {
-          text: translatedText,
-          targetLanguage
-        }
-      }
-      addRecording(updatedRecording)
-
-      toast({
-        title: "Success",
-        description: "Text has been translated successfully.",
-      })
-    } catch (error) {
-      console.error("Translation error:", error)
-      toast({
-        title: "Error",
-        description: "Failed to translate the text. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsTranslating(false)
     }
   }
 
@@ -493,7 +454,7 @@ export default function VoicePage() {
                     <p className="text-gray-600 whitespace-pre-wrap mb-2">
                       {rec.transcript}
                     </p>
-                    <TextActions text={rec.transcript} />
+                    <TextActions text={rec.transcript || ""} />
                   </div>
 
                   {/* Translation */}
@@ -510,16 +471,9 @@ export default function VoicePage() {
                       </>
                     ) : (
                       <div className="flex items-center justify-start h-12">
-                        {isTranslating ? (
-                          <p className="text-gray-500">Translating...</p>
-                        ) : (
-                          <Button
-                            onClick={() => handleTranslation()}
-                            disabled={rec.sourceLanguage ? rec.sourceLanguage === targetLanguage : false}
-                          >
-                            Translate to {LANGUAGE_NAMES[targetLanguage]}
-                          </Button>
-                        )}
+                        <p className="text-gray-500">
+                          {isTranslating ? "Translating..." : "Translation will appear automatically"}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -529,76 +483,6 @@ export default function VoicePage() {
           )}
         </div>
       </div>
-
-      {/* Translation Section */}
-      {selectedRecording && recording && (
-        <div className="bg-white rounded-3xl shadow-lg max-w-4xl w-full overflow-hidden">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Translation</h2>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-500">Translate to:</span>
-                <LanguageSelector
-                  value={targetLanguage}
-                  onChange={setTargetLanguage}
-                  disabled={isTranslating}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Original Text */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-sm font-medium text-gray-700">
-                    Original Text ({LANGUAGE_NAMES[recording.sourceLanguage || "eng"]})
-                  </h2>
-                </div>
-                {recording.transcript ? (
-                  <>
-                    <p className="text-gray-600 whitespace-pre-wrap">
-                      {recording.transcript}
-                    </p>
-                    <TextActions text={recording.transcript} />
-                  </>
-                ) : (
-                  <p className="text-gray-500">No transcript available</p>
-                )}
-              </div>
-
-              {/* Translation */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-sm font-medium text-gray-700">
-                    Translation ({LANGUAGE_NAMES[targetLanguage]})
-                  </h2>
-                </div>
-                {recording.translation && recording.translation.targetLanguage === targetLanguage ? (
-                  <>
-                    <p className="text-gray-600 whitespace-pre-wrap">
-                      {recording.translation.text}
-                    </p>
-                    <TextActions text={recording.translation.text} />
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center min-h-[100px]">
-                    {isTranslating ? (
-                      <p className="text-gray-500">Translating...</p>
-                    ) : (
-                      <Button
-                        onClick={handleTranslation}
-                        disabled={recording.sourceLanguage === targetLanguage}
-                      >
-                        Translate
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 } 

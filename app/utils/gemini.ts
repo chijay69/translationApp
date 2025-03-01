@@ -1,12 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+const MODEL = "gemini-2.0-flash";
+
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
 
 export async function transcribeAudio(transcript: string): Promise<string> {
   try {
     // Create a model instance
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: MODEL });
 
     // Prompt to enhance the transcript
     const prompt = `Please enhance and clean up this transcript while maintaining its original meaning. If the text is not in English, preserve the original language:
@@ -28,7 +30,7 @@ Return only the enhanced transcript without any additional text or explanations.
 }
 
 export async function translateText(text: string, fromLang: string, toLang: string): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: MODEL });
 
   const prompt = `Translate this text from ${fromLang} to ${toLang}. Maintain the meaning and tone while ensuring natural-sounding translation:
 

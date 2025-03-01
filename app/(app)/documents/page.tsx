@@ -8,14 +8,14 @@ import { useToast } from "@/components/ui/use-toast"
 import { transcribeAudio } from "@/app/utils/gemini"
 
 export default function DocumentsPage() {
-  const { recordings, deleteRecording } = useRecordings()
+  const { recordings, deleteRecording, updateRecording } = useRecordings()
   const { toast } = useToast()
 
   const handleRetryTranscription = async (id: string, transcript: string) => {
     try {
       const enhancedTranscript = await transcribeAudio(transcript)
       // Update the recording with the new transcript
-      // Note: You'll need to add an updateRecording function to the RecordingContext
+      updateRecording(id, { transcript: enhancedTranscript })
       toast({
         title: "Success",
         description: "Transcript has been enhanced.",
