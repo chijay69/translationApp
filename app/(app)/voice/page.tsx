@@ -99,7 +99,8 @@ export default function VoicePage() {
     sourceLanguage,
     targetLanguage,
     setSourceLanguage,
-    setTargetLanguage 
+    setTargetLanguage,
+    updateRecording
   } = useRecordings()
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
@@ -114,6 +115,7 @@ export default function VoicePage() {
 
   const startRecording = async () => {
     try {
+      console.log("1. Starting recording...")
       // Start speech recognition immediately
       const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition
       if (!SpeechRecognitionConstructor) {
@@ -124,45 +126,54 @@ export default function VoicePage() {
       recognition.continuous = true
       recognition.interimResults = true
       recognition.lang = LANGUAGE_CODES[sourceLanguage]
+      console.log("2. Speech recognition configured with language:", recognition.lang)
 
       // Optimize transcription handling
       let finalTranscriptParts: string[] = []
       recognition.onresult = (event: SpeechRecognitionEvent) => {
+        console.log("3. Received speech recognition result")
         let interimTranscript = ''
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
           if (result.isFinal) {
+            console.log("4. Final transcript part received")
             finalTranscriptParts.push(result[0].transcript)
             interimTranscriptRef.current = finalTranscriptParts.join(' ')
           } else {
             interimTranscript = result[0].transcript
+            console.log("5. Interim transcript updated:", interimTranscript)
           }
         }
 
         // Update transcript only with necessary changes
         const newTranscript = finalTranscriptParts.join(' ') + (interimTranscript ? ' ' + interimTranscript : '')
         if (newTranscript !== transcript) {
+          console.log("6. Updating transcript state:", newTranscript)
           setTranscript(newTranscript)
         }
       }
 
       // Start recognition before media recorder setup
       recognition.start()
+      console.log("7. Speech recognition started")
       recognitionRef.current = recognition as SpeechRecognition
 
       // Setup media recorder in parallel
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      console.log("8. Got audio stream")
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
       })
       
       mediaRecorder.start()
+      console.log("9. Media recorder started")
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
 
       // Handle audio data
       mediaRecorder.ondataavailable = (e) => {
+        console.log("10. Audio data chunk available")
         chunksRef.current.push(e.data)
       }
 
@@ -170,6 +181,7 @@ export default function VoicePage() {
       setTranscript("")
       setTranscribedText("")
       setAudioData(null)
+      console.log("11. Recording state initialized")
     } catch (error) {
       console.error("Error starting recording:", error)
       toast({
@@ -181,37 +193,59 @@ export default function VoicePage() {
   }
 
   const handleRecordingStop = () => {
+    console.log("12. Stopping recording...")
     if (!mediaRecorderRef.current || !recognitionRef.current) return
 
-      // Stop recognition first to get final results
-      recognitionRef.current.stop()
-      
-    // Stop media recorder and process audio
-    mediaRecorderRef.current.stop()
-    setIsRecording(false)
+    // Get current transcript before stopping
+    const currentTranscript = transcript || interimTranscriptRef.current
+    console.log("12a. Current transcript before stop:", currentTranscript)
 
+    // Stop recognition first to get final results
+    recognitionRef.current.onend = () => {
+      console.log("13. Speech recognition ended")
+      
+      // Stop media recorder and process audio
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop()
+        setIsRecording(false)
+        console.log("14. Media recorder stopped")
+      }
+    }
+
+    recognitionRef.current.stop()
+      
     mediaRecorderRef.current.onstop = async () => {
+      console.log("15. Processing recorded audio...")
       const blob = new Blob(chunksRef.current, { 
         type: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
       })
       setAudioData(blob)
       chunksRef.current = []
+      console.log("16. Audio blob created")
 
-      // Process final transcript
-      const currentTranscript = interimTranscriptRef.current.trim()
-      if (!currentTranscript) return
+      // Use the captured transcript instead of checking interimTranscriptRef
+      console.log("17. Final transcript retrieved:", currentTranscript)
+      if (!currentTranscript) {
+        console.log("No transcript available, stopping processing")
+        return
+      }
 
+      console.log("18. Starting final processing...")
       setIsProcessingFinal(true)
+      
       try {
         // Process transcript enhancement and translation in parallel
+        const shouldTranslate = sourceLanguage !== targetLanguage
+        console.log("19. Starting enhancement and translation...")
         const [enhancedTranscript, translatedText] = await Promise.all([
           transcribeAudio(currentTranscript),
-          sourceLanguage !== targetLanguage ? translateText(
+          shouldTranslate ? translateText(
             currentTranscript,
             LANGUAGE_NAMES[sourceLanguage],
             LANGUAGE_NAMES[targetLanguage]
-          ) : null
+          ) : Promise.resolve(null)
         ])
+        console.log("20. Enhancement and translation complete")
 
         setTranscribedText(enhancedTranscript)
 
@@ -223,13 +257,16 @@ export default function VoicePage() {
           timestamp: new Date(),
           transcript: enhancedTranscript,
           sourceLanguage,
-          translation: translatedText ? {
+          translation: shouldTranslate && translatedText ? {
             text: translatedText,
             targetLanguage
           } : undefined
         }
 
-        addRecording(newRecording)
+        console.log("21. Adding recording to storage...")
+        await addRecording(newRecording)
+        console.log("22. Recording added successfully")
+        
       } catch (error) {
         console.error("Processing error:", error)
         toast({
@@ -245,14 +282,12 @@ export default function VoicePage() {
           transcript: currentTranscript,
           sourceLanguage
         }
-        addRecording(newRecording)
+        await addRecording(newRecording)
       } finally {
         setIsProcessingFinal(false)
       }
     }
   }
-
-  
 
   // Add effect to automatically translate when target language changes
   useEffect(() => {
@@ -260,6 +295,7 @@ export default function VoicePage() {
       const latestRecording = recordings[recordings.length - 1]
       if (!latestRecording?.transcript || !latestRecording.sourceLanguage) return
       if (latestRecording.translation?.targetLanguage === targetLanguage) return
+      if (latestRecording.sourceLanguage === targetLanguage) return
 
       setIsTranslating(true)
       try {
@@ -269,14 +305,17 @@ export default function VoicePage() {
           LANGUAGE_NAMES[targetLanguage]
         )
 
-        const updatedRecording = {
-          ...latestRecording,
+        updateRecording(latestRecording.id, {
           translation: {
             text: translatedText,
             targetLanguage
           }
-        }
-        addRecording(updatedRecording)
+        })
+
+        toast({
+          title: "Success",
+          description: "Text has been translated.",
+        })
       } catch (error) {
         console.error("Auto-translation error:", error)
         toast({
@@ -292,7 +331,7 @@ export default function VoicePage() {
     if (recordings.length > 0) {
       translateLatestRecording()
     }
-  }, [targetLanguage, recordings, addRecording])
+  }, [targetLanguage, recordings, updateRecording])
 
   const handleRetryTranscription = async () => {
     if (transcript) {
