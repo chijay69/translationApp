@@ -93,11 +93,16 @@ declare global {
 export default function VoicePage() {
   const { toast } = useToast()
   const router = useRouter()
-  const { addRecording, recordings } = useRecordings()
+  const { 
+    addRecording, 
+    recordings,
+    sourceLanguage,
+    targetLanguage,
+    setSourceLanguage,
+    setTargetLanguage 
+  } = useRecordings()
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState("")
-  const [sourceLanguage, setSourceLanguage] = useState("eng")
-  const [targetLanguage, setTargetLanguage] = useState("eng")
   const [isProcessingFinal, setIsProcessingFinal] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
   const [transcribedText, setTranscribedText] = useState("")

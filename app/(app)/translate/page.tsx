@@ -32,8 +32,12 @@ export default function TranslatePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { toast } = useToast()
-  const { recordings, updateRecording } = useRecordings()
-  const [targetLanguage, setTargetLanguage] = useState("eng")
+  const { 
+    recordings, 
+    updateRecording,
+    targetLanguage,
+    setTargetLanguage 
+  } = useRecordings()
   const [isTranslating, setIsTranslating] = useState(false)
 
   const recordingId = searchParams.get("recordingId")

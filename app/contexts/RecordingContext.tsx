@@ -19,12 +19,35 @@ interface RecordingContextType {
   addRecording: (recording: Recording) => void
   deleteRecording: (id: string) => void
   updateRecording: (id: string, updates: Partial<Recording>) => void
+  sourceLanguage: string
+  targetLanguage: string
+  setSourceLanguage: (lang: string) => void
+  setTargetLanguage: (lang: string) => void
 }
 
 const RecordingContext = createContext<RecordingContextType | undefined>(undefined)
 
 export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const [recordings, setRecordings] = useState<Recording[]>([])
+  const [sourceLanguage, setSourceLanguage] = useState<string>(() => {
+    // Initialize from localStorage or default to 'eng'
+    const saved = localStorage.getItem("sourceLanguage")
+    return saved || "eng"
+  })
+  const [targetLanguage, setTargetLanguage] = useState<string>(() => {
+    // Initialize from localStorage or default to 'eng'
+    const saved = localStorage.getItem("targetLanguage")
+    return saved || "eng"
+  })
+
+  // Save language preferences when they change
+  useEffect(() => {
+    localStorage.setItem("sourceLanguage", sourceLanguage)
+  }, [sourceLanguage])
+
+  useEffect(() => {
+    localStorage.setItem("targetLanguage", targetLanguage)
+  }, [targetLanguage])
 
   // Load recordings from localStorage on mount
   useEffect(() => {
@@ -110,7 +133,18 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <RecordingContext.Provider value={{ recordings, addRecording, deleteRecording, updateRecording }}>
+    <RecordingContext.Provider 
+      value={{ 
+        recordings, 
+        addRecording, 
+        deleteRecording, 
+        updateRecording,
+        sourceLanguage,
+        targetLanguage,
+        setSourceLanguage,
+        setTargetLanguage
+      }}
+    >
       {children}
     </RecordingContext.Provider>
   )
