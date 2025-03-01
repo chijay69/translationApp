@@ -2,6 +2,7 @@
 
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function SignIn() {
@@ -130,14 +131,14 @@ export default function SignIn() {
           </div>
         </div>
 
-        <div className="text-sm text-center mt-4">
+        <div className="text-sm text-center">
           Don't have an account?{' '}
-          <button
-            onClick={() => router.push('/auth/signup')}
+          <Link
+            href="/auth/signup"
             className="font-medium text-indigo-600 hover:text-indigo-500"
           >
             Sign up
-          </button>
+          </Link>
         </div>
       </div>
     </div>
