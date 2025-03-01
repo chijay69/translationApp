@@ -1,14 +1,22 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const callbackUrl = searchParams.get('callbackUrl');
+    if (callbackUrl?.includes('/auth/signup')) {
+      router.replace('/auth/signup');
+    }
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,12 +141,12 @@ export default function SignIn() {
 
         <div className="text-sm text-center">
           Don't have an account?{' '}
-          <Link
-            href="/auth/signup"
+          <button
+            onClick={() => router.replace('/auth/signup')}
             className="font-medium text-indigo-600 hover:text-indigo-500"
           >
             Sign up
-          </Link>
+          </button>
         </div>
       </div>
     </div>
