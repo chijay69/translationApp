@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { prisma } from "@/lib/prisma"
+import { createUser } from "@/app/utils/edge-config"
 
 export async function POST(req: Request) {
   try {
@@ -13,35 +12,27 @@ export async function POST(req: Request) {
       )
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    })
+    const user = await createUser({ name, email, password })
 
-    if (existingUser) {
+    if (!user) {
       return NextResponse.json(
-        { message: "User already exists" },
+        { message: "Error creating user" },
         { status: 400 }
       )
     }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    })
 
     return NextResponse.json(
       { message: "User created successfully" },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "User already exists") {
+      return NextResponse.json(
+        { message: "User already exists" },
+        { status: 409 }
+      )
+    }
+
     console.error("Registration error:", error)
     return NextResponse.json(
       { message: "Error creating user" },

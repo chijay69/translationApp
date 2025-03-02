@@ -4,6 +4,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { isAdminUser } from '@/app/utils/edge-config';
 
 export default function SignIn() {
   const router = useRouter();
@@ -20,6 +21,13 @@ export default function SignIn() {
     const password = formData.get('password') as string;
 
     try {
+      // Check for admin credentials
+      const isAdmin = await isAdminUser(email, password);
+      if (isAdmin) {
+        router.push('/voice?admin=true');
+        return;
+      }
+
       const result = await signIn('credentials', {
         email,
         password,
