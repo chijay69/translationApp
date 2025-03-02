@@ -9,6 +9,12 @@ export default function SignUp() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,36 +34,16 @@ export default function SignUp() {
     }
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
+
+      setUserData({
+        name: name,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword
       });
 
-      if (res.ok) {
-        // Sign in the user after successful registration
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        });
-
-        if (result?.error) {
-          setError('Error signing in after registration');
-        } else {
-          router.push('/voice');
-          router.refresh();
-        }
-      } else {
-        const data = await res.json();
-        setError(data.message || 'Error creating account');
-      }
+      router.push("/voice");
+      
     } catch (error) {
       setError('An error occurred. Please try again.');
     } finally {

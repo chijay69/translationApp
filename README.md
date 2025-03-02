@@ -1,60 +1,76 @@
-# Voice Translator App
+# TranslApp - AI-Powered Translation Application
 
-A modern web application for real-time voice recording, transcription, and translation using Next.js and Google's Gemini AI.
+A modern web application that provides real-time translation services across 100+ languages using AI technology. Built with Next.js 14, Tailwind CSS, and Google's Gemini AI.
 
 ## Features
 
-- **Real-time Voice Recording**
-  - Support for multiple languages
-  - Real-time transcription while recording
-  - High-quality audio capture in WebM/OGG format
-
-- **Smart Transcription**
-  - AI-powered transcript enhancement
-  - Support for multiple source languages
-  - Real-time display of transcription
-
-- **Advanced Translation**
-  - Powered by Google's Gemini AI
-  - Support for multiple target languages
-  - Maintains context and tone in translations
-  - Automatic translation on language change
-
-- **Recording Management**
-  - Save and organize recordings
-  - Persistent storage using localStorage
-  - Play back recorded audio
-  - View and manage transcripts
-  - Retry transcription and translation
-
-- **User Interface**
-  - Modern, responsive design
-  - Easy-to-use recording controls
-  - Language selection for source and target
-  - Copy-to-clipboard functionality
-  - Loading states and error handling
+- 🌐 Support for 100+ languages
+- 🎙️ Voice translation capabilities
+- 🔒 Secure authentication system
+- 👤 Admin dashboard
+- 🎨 Modern and responsive UI
+- ⚡ Real-time translation
+- 🤖 AI-powered accuracy
 
 ## Tech Stack
 
-- **Frontend Framework**: Next.js 14 (App Router)
-- **UI Components**: Tailwind CSS
-- **AI Integration**: Google Gemini AI
-- **State Management**: React Context
-- **Audio Processing**: Web Audio API
-- **Speech Recognition**: Web Speech API
+- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Authentication**: NextAuth.js
+- **AI/ML**: Google Gemini AI
+- **State Management**: Server Actions
+- **Configuration**: Vercel Edge Config
+- **Deployment**: Vercel
 
 ## Prerequisites
 
-- Node.js 18.x or later
-- Google Gemini API key
-- Modern web browser with microphone support
+Before you begin, ensure you have:
 
-## Setup
+- Node.js 18.x or later
+- npm or yarn
+- A Vercel account
+- A Google Cloud account (for Gemini AI API)
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-nextauth-secret
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Gemini AI
+NEXT_PUBLIC_GEMINI_API_KEY=your-gemini-api-key
+
+# Vercel Edge Config
+EDGE_CONFIG=your-edge-config-url
+```
+
+## Edge Config Setup
+
+1. Create a new Edge Config in your Vercel dashboard
+2. Add the following items:
+
+```json
+{
+  "admin": {
+    "email": "admin@example.com",
+    "password": "your-admin-password"
+  },
+  "users": []
+}
+```
+
+## Installation
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd translator-app
+git clone https://github.com/yourusername/translapp.git
+cd translapp
 ```
 
 2. Install dependencies:
@@ -64,70 +80,67 @@ npm install
 yarn install
 ```
 
-3. Create a `.env.local` file in the project root and add your Gemini API key:
-```env
-NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
-```
-
-4. Start the development server:
+3. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Usage
+## Project Structure
 
-1. **Recording**
-   - Click the microphone button to start recording
-   - Select your source language before recording
-   - Speak clearly into your microphone
-   - Click the stop button when finished
+```
+├── app/
+│   ├── actions/         # Server actions
+│   ├── api/            # API routes
+│   ├── auth/           # Authentication pages
+│   ├── components/     # React components
+│   ├── utils/          # Utility functions
+│   ├── layout.tsx      # Root layout
+│   └── page.tsx        # Home page
+├── public/             # Static assets
+├── styles/            # Global styles
+└── middleware.ts      # NextAuth middleware
+```
 
-2. **Transcription**
-   - View real-time transcription while recording
-   - Enhanced transcript appears after recording
-   - Use the refresh button to retry transcription
+## Authentication
 
-3. **Translation**
-   - Select target language for translation
-   - Translations are generated automatically
-   - View both original and translated text
-   - Copy text using the copy button
+The app supports two authentication methods:
+1. Email/Password
+2. Google OAuth
 
-4. **Managing Recordings**
-   - Access previous recordings in the Documents section
-   - Play back audio recordings
-   - View and copy transcripts
-   - Delete unwanted recordings
+Admin access is managed through Vercel Edge Config.
 
-## Browser Support
+## Available Scripts
 
-The application requires a modern web browser with support for:
-- Web Audio API
-- Web Speech API
-- MediaRecorder API
-- localStorage
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
 
-Tested and supported browsers:
-- Chrome (recommended)
-- Edge
-- Firefox
-- Safari
+## Deployment
 
-## Known Limitations
+The app is optimized for deployment on Vercel:
 
-- Speech recognition quality may vary by language
-- Requires microphone permissions
-- Internet connection required for AI features
-- Some browsers may have limited speech recognition support
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Configure environment variables
+4. Deploy
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, email support@translapp.com or open an issue in the GitHub repository. 

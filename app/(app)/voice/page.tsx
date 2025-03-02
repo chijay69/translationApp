@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { transcribeAudio, translateText } from "../../utils/gemini"
 import { useRecordings } from "../../contexts/RecordingContext"
 import { useRouter } from "next/navigation"
+import ProtectedRoute from "../../components/ProtectedRoute"
 
 // Language code mapping
 const LANGUAGE_CODES: Record<string, string> = {
@@ -91,6 +92,14 @@ declare global {
 }
 
 export default function VoicePage() {
+  return (
+    <ProtectedRoute>
+      <VoicePageContent />
+    </ProtectedRoute>
+  );
+}
+
+function VoicePageContent() {
   const { toast } = useToast()
   const router = useRouter()
   const { 

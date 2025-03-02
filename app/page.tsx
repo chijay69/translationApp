@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from './api/auth/[...nextauth]/route';
+import { cookies } from 'next/headers';
 import Link from "next/link";
 import {
   FlagBrazil,
@@ -13,7 +12,9 @@ import {
 } from "./components/flags";
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('session');
+  const session = sessionCookie ? JSON.parse(sessionCookie.value) : null;
 
   if (!session) {
     return (
