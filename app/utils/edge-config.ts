@@ -1,7 +1,7 @@
-import { createClient } from '@vercel/edge-config';
-import { hash, compare } from 'bcryptjs';
+'use server';
 
-const edgeConfig = createClient(process.env.EDGE_CONFIG!);
+import { get } from '@vercel/edge-config';
+import { hash, compare } from 'bcryptjs';
 
 interface AdminUser {
   email: string;
@@ -18,7 +18,7 @@ interface User {
 
 export async function getAdminCredentials(): Promise<AdminUser | null> {
   try {
-    const admin = await edgeConfig.get<AdminUser>('admin');
+    const admin = await get('admin');
     return admin || null;
   } catch (error) {
     console.error('Error fetching admin credentials:', error);
@@ -26,7 +26,7 @@ export async function getAdminCredentials(): Promise<AdminUser | null> {
   }
 }
 
-export async function isAdminUser(email: string, password: string): Promise<boolean> {
+export async function checkAdminCredentials(email: string, password: string): Promise<boolean> {
   try {
     const admin = await getAdminCredentials();
     if (!admin) return false;
@@ -39,7 +39,7 @@ export async function isAdminUser(email: string, password: string): Promise<bool
 
 export async function getAllUsers(): Promise<User[]> {
   try {
-    const users = await edgeConfig.get<User[]>('users');
+    const users = await get('users');
     return users || [];
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -67,7 +67,7 @@ export async function createUser(userData: Omit<User, 'id' | 'createdAt'>): Prom
 
     // Add new user to the list
     const updatedUsers = [...users, newUser];
-    await edgeConfig.set('users', updatedUsers);
+    await get('users').set(updatedUsers);
 
     return newUser;
   } catch (error) {

@@ -3,36 +3,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAdminCredentials } from './app/utils/edge-config';
 
-export default withAuth(
-  async function middleware(req) {
-    // Check if it's the admin user
-    const adminCookie = req.cookies.get('admin_access');
-    const admin = await getAdminCredentials();
-    const isAdmin = adminCookie?.value === admin?.email;
-
-    // If the user is authenticated or is admin and trying to access auth pages, redirect to /voice
-    if (req.nextUrl.pathname.startsWith('/auth/')) {
-      return NextResponse.redirect(new URL('/voice', req.url));
-    }
-
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: async ({ token }) => {
-        // Allow access if user has a valid token or is admin
-        const admin = await getAdminCredentials();
-        return !!token || token?.email === admin?.email;
-      },
-    },
-    pages: {
-      signIn: '/auth/signin',
-    },
-  }
-);
-
 // Handle admin access and callback URL redirections
-export async function middleware(request: NextRequest) {
+async function handleAdminAndCallbacks(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   // If trying to access signup through callback URL, redirect directly to signup
@@ -55,16 +27,44 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return null;
 }
 
+export default withAuth(
+  async function middleware(request: NextRequest) {
+    // First check admin and callback handling
+    const specialResponse = await handleAdminAndCallbacks(request);
+    if (specialResponse) return specialResponse;
+
+    const adminCookie = request.cookies.get('admin_access');
+    const admin = await getAdminCredentials();
+    const isAdmin = adminCookie?.value === admin?.email;
+
+    // If user is admin, allow access
+    if (isAdmin) {
+      return NextResponse.next();
+    }
+
+    // For non-admin users, rely on NextAuth's built-in protection
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => {
+        // For protected routes, require token
+        return !!token;
+      }
+    },
+    pages: {
+      signIn: '/auth/signin',
+    },
+  }
+);
+
 export const config = {
-  // Protect all routes under /voice and /profile
-  // But exclude auth routes from middleware
   matcher: [
+    // Only protect specific routes
     '/voice/:path*',
-    '/profile/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    '/auth/:path*',
-  ],
+    '/profile/:path*'
+  ]
 }; 

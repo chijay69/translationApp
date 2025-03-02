@@ -1,13 +1,10 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import NextAuth from "next-auth/next"
 import GoogleProvider from "next-auth/providers/google"
-import bcrypt from "bcryptjs"
-import { prisma } from "@/lib/prisma"
+import { validateUser } from "@/app/utils/edge-config"
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -21,29 +18,19 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials');
+          return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        });
-
-        if (!user || !user?.password) {
-          throw new Error('Invalid credentials');
+        const user = await validateUser(credentials.email, credentials.password);
+        if (!user) {
+          return null;
         }
 
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error('Invalid credentials');
-        }
-
-        return user;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        };
       }
     })
   ],
